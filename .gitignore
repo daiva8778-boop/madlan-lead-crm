@@ -1,0 +1,9 @@
+.env
+data/
+db/backups/
+autoreply/.wwebjs_auth/
+autoreply/.wwebjs_cache/
+autoreply/node_modules/
+__pycache__/
+*.pyc
+.claude/

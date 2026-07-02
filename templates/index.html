@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Madlan Lead CRM</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <aside class="left-panel">
+    <h2>Scraper Control</h2>
+
+    <label for="city-select">City</label>
+    <select id="city-select">
+      {% for key, c in cities.items() %}
+      <option value="{{ key }}">{{ c.label }}</option>
+      {% endfor %}
+    </select>
+
+    <button id="scrape-btn" class="big-button">Scrape Next 50</button>
+
+    <div id="scrape-progress" class="panel hidden">
+      <div id="progress-text">0/50...</div>
+      <div class="progress-bar-track"><div id="progress-bar-fill" class="progress-bar-fill"></div></div>
+    </div>
+
+    <div id="scrape-summary" class="panel hidden"></div>
+
+    <div class="panel">
+      <h3>Auto-reply module</h3>
+      <div id="autoreply-status">Checking...</div>
+      <label class="switch-label">
+        <input type="checkbox" id="autoreply-toggle">
+        Master switch (ON/OFF)
+      </label>
+    </div>
+
+    <div class="panel">
+      <h3 class="collapsible" id="failed-urls-toggle">Failed URLs &#9662;</h3>
+      <div id="failed-urls-list" class="hidden small-list"></div>
+    </div>
+
+    <div class="panel">
+      <h3 class="collapsible" id="template-stats-toggle">Template performance &#9662;</h3>
+      <div id="template-stats-list" class="hidden small-list"></div>
+    </div>
+  </aside>
+
+  <main class="right-panel">
+    <div class="counters">
+      <div class="counter"><span id="counter-total">0</span> Total</div>
+      <div class="counter new"><span id="counter-new">0</span> New</div>
+      <div class="counter sent"><span id="counter-sent">0</span> Sent</div>
+      <div class="counter replied"><span id="counter-replied">0</span> Replied</div>
+    </div>
+
+    <div class="toolbar">
+      <div class="filter-tabs" id="filter-tabs">
+        <button data-filter="all" class="active">All</button>
+        <button data-filter="new">New</button>
+        <button data-filter="sent">Sent</button>
+        <button data-filter="followup_due">Follow-up due</button>
+        <button data-filter="replied">Replied</button>
+        <button data-filter="no_site">No-site only</button>
+      </div>
+
+      <select id="city-filter">
+        <option value="all">All cities</option>
+        {% for key, c in cities.items() %}
+        <option value="{{ key }}">{{ c.label }}</option>
+        {% endfor %}
+      </select>
+
+      <select id="sort-select">
+        <option value="newest">Newest scraped</option>
+        <option value="deals">Most deals</option>
+      </select>
+
+      <button id="export-xlsx-btn">Export to Excel</button>
+      <button id="export-csv-btn">Export to CSV</button>
+    </div>
+
+    <table id="agency-table">
+      <thead>
+        <tr>
+          <th>Agency</th><th>City</th><th>Deals</th><th>Exclusives</th>
+          <th>Phone used</th><th>WhatsApp</th><th>Website</th>
+          <th>Scraped</th><th>Status</th><th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="agency-tbody"></tbody>
+    </table>
+  </main>
+
+</div>
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

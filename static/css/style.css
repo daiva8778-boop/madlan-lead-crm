@@ -1,0 +1,91 @@
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  margin: 0;
+  background: #f4f5f7;
+  color: #1f2430;
+}
+.app { display: flex; min-height: 100vh; }
+
+.left-panel {
+  width: 300px;
+  flex-shrink: 0;
+  background: #1f2430;
+  color: #e7e9ee;
+  padding: 20px;
+  overflow-y: auto;
+}
+.left-panel h2 { margin-top: 0; font-size: 18px; }
+.left-panel label { display: block; margin: 10px 0 4px; font-size: 13px; color: #aab0c0; }
+.left-panel select { width: 100%; padding: 8px; border-radius: 6px; border: none; margin-bottom: 10px; }
+
+.big-button {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #25d366;
+  color: #08331b;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 8px 0;
+}
+.big-button:hover { background: #1fb958; }
+.big-button:disabled { background: #4a4f5c; color: #888; cursor: not-allowed; }
+
+.panel {
+  background: #2a3040;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 14px;
+}
+.panel h3 { margin: 0 0 8px; font-size: 14px; }
+.panel.hidden { display: none; }
+
+.progress-bar-track { background: #3a4152; border-radius: 6px; height: 8px; overflow: hidden; margin-top: 8px; }
+.progress-bar-fill { background: #25d366; height: 100%; width: 0%; transition: width 0.3s; }
+
+.switch-label { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 8px; cursor: pointer; }
+
+.collapsible { cursor: pointer; user-select: none; }
+.small-list { font-size: 12px; max-height: 200px; overflow-y: auto; margin-top: 8px; }
+.small-list.hidden { display: none; }
+.small-list div { padding: 4px 0; border-bottom: 1px solid #3a4152; }
+
+.right-panel { flex: 1; padding: 20px; overflow-x: auto; }
+
+.counters { display: flex; gap: 16px; margin-bottom: 16px; }
+.counter { background: white; border-radius: 8px; padding: 10px 16px; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.counter span { font-size: 20px; font-weight: 700; display: block; }
+.counter.new span { color: #2563eb; }
+.counter.sent span { color: #16a34a; }
+.counter.replied span { color: #9333ea; }
+
+.toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.filter-tabs button {
+  padding: 8px 12px; border: 1px solid #d0d3da; background: white; border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+.filter-tabs button.active { background: #1f2430; color: white; border-color: #1f2430; }
+.toolbar select, .toolbar button { padding: 8px 12px; border-radius: 6px; border: 1px solid #d0d3da; background: white; cursor: pointer; }
+
+table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+th, td { padding: 8px 10px; text-align: right; font-size: 13px; border-bottom: 1px solid #eceef2; }
+th { background: #f0f1f4; font-weight: 600; position: sticky; top: 0; }
+
+tr.status-new { background: #eef4ff; }
+tr.status-sent { background: #eefcf3; }
+tr.status-do-not-contact { background: #f2f2f2; opacity: 0.65; }
+tr.status-replied { background: #f6eeff; }
+
+.no-site { background: #fff6a3 !important; }
+.wa-btn {
+  background: #25d366; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;
+}
+.wa-btn:disabled { background: #ccc; cursor: not-allowed; }
+.wa-undo { background: none; border: none; color: #666; cursor: pointer; font-size: 11px; text-decoration: underline; margin-right: 6px; }
+
+.follow-up-badge { background: #f59e0b; color: white; border-radius: 4px; padding: 2px 6px; font-size: 11px; margin-right: 6px; }
+
+.notes-input { width: 140px; padding: 4px; font-size: 12px; border: 1px solid #d0d3da; border-radius: 4px; }
+.status-select { font-size: 12px; padding: 4px; border-radius: 4px; }

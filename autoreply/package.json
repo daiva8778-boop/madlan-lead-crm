@@ -1,0 +1,17 @@
+{
+  "name": "madlan-crm-autoreply",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Optional WhatsApp auto-reply module for the Madlan CRM (unofficial whatsapp-web.js client).",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "whatsapp-web.js": "^1.26.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
