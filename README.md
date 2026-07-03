@@ -162,3 +162,41 @@ A few things worth knowing:
 - If madlan.co.il changes how this data is structured in the future, the parsing logic lives in
   `scraper/ssr_extract.py` (shared extraction), `scraper/directory_parser.py`, and
   `scraper/profile_parser.py` — all clearly commented for exactly this situation.
+
+## 9. Running it in the cloud (optional)
+
+The app can also run on a cloud host instead of (or in addition to) your own PC, so you can open
+the dashboard from any device. Two hosts are set up:
+
+### Modal
+
+Already deployed. Live URL: `https://daiva8778-boop--madlan-lead-crm-flask-app.modal.run`
+
+To redeploy after making code changes:
+```
+python -m modal deploy modal_app.py
+```
+This reads the `madlan-crm-secrets` Modal secret (Firecrawl key, dashboard password, session key)
+and stores the database on a persistent Modal Volume (`madlan-crm-data`), so it survives redeploys.
+To view/change the secret values later: `python -m modal secret create madlan-crm-secrets --from-dotenv <file> --force`.
+
+**Important cost note:** scraping from Modal costs noticeably more Firecrawl credits than scraping
+locally — in testing, ~1 credit per agency from Modal vs. ~0 (free) from a home connection. This is
+because Madlan's bot protection treats Modal's server IPs with more suspicion than a normal home
+connection, so it falls back to Firecrawl far more often.
+
+**Also important:** the local app (`run.bat`) and the Modal deployment use **separate databases**
+(a local file vs. a Modal Volume) — scraping locally does not automatically appear in the cloud
+version, and vice versa. Given the cost difference above, the practical approach is: scrape from
+whichever one you check most often, or scrape locally and treat the cloud version mainly for
+viewing/messaging existing leads from other devices. Ask if you'd rather have one shared database
+instead — that's a bigger change (moving off SQLite to a proper hosted database) but doable.
+
+### Railway
+
+Not yet deployed — prepared but not set up. The app already has what Railway needs
+(`Procfile`, reads the `PORT` env var, binds `0.0.0.0` when `RAILWAY_ENVIRONMENT` is set):
+1. Create a new Railway project, connect it to the `madlan-lead-crm` GitHub repo.
+2. Add a Volume, mounted at e.g. `/data`.
+3. Set environment variables: `FIRECRAWL_API_KEY`, `DASHBOARD_PASSWORD`, `SECRET_KEY`, `DATA_DIR=/data`.
+4. Railway auto-detects the `Procfile` and deploys.

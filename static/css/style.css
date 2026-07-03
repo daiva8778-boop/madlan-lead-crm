@@ -16,6 +16,8 @@ body {
   overflow-y: auto;
 }
 .left-panel h2 { margin-top: 0; font-size: 18px; }
+.logout-btn { background: none; border: 1px solid #4a4f5c; color: #aab0c0; border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer; }
+.logout-btn:hover { border-color: #aab0c0; color: white; }
 .left-panel label { display: block; margin: 10px 0 4px; font-size: 13px; color: #aab0c0; }
 .left-panel select { width: 100%; padding: 8px; border-radius: 6px; border: none; margin-bottom: 10px; }
 

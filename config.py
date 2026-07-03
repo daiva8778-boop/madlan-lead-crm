@@ -1,16 +1,32 @@
 import os
+import secrets
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
-DATA_DIR = BASE_DIR / "data"
+
+# DATA_DIR defaults to a local folder for `run.bat`/local use. On Railway, set
+# DATA_DIR to the mounted volume's path (e.g. /data) via an env var so the
+# database survives redeploys instead of living on ephemeral disk.
+DATA_DIR = Path(os.environ.get("DATA_DIR", str(BASE_DIR / "data")))
 DB_PATH = DATA_DIR / "madlan_crm.db"
-BACKUPS_DIR = BASE_DIR / "db" / "backups"
+BACKUPS_DIR = DATA_DIR / "backups"
 SCHEMA_PATH = BASE_DIR / "db" / "schema.sql"
 
 FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY", "").strip()
+
+# Simple shared-password protection for when this is reachable over the
+# public internet (e.g. deployed on Railway), not just localhost. Unset
+# locally = no login required, matching the original local-only design.
+DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "").strip()
+# Flask session signing key — MUST be set to a fixed value in production
+# (Railway env var) so sessions survive restarts; a random one is fine for
+# local single-machine use where restarts just mean logging in again.
+SECRET_KEY = os.environ.get("SECRET_KEY", "").strip() or secrets.token_hex(32)
+
+IS_CLOUD = bool(os.environ.get("RAILWAY_ENVIRONMENT", ""))
 
 # city key -> (display label, Madlan URL slug)
 CITIES = {
@@ -46,4 +62,4 @@ FOLLOW_UP_DUE_DAYS = 3
 
 ENRICHMENT_TIMEOUT_SECONDS = 10
 
-FLASK_PORT = 5000
+FLASK_PORT = int(os.environ.get("PORT", 5000))
