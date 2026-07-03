@@ -135,29 +135,39 @@ def rescrape_mobile_batch(progress_callback=None):
     yet (phone_source != 'direct_mobile') — the first enrichment attempt can
     miss it (site slow/down at scrape time, contact page not found that
     round), so retrying later can pick up ones that were missed. Processes
-    MOBILE_RESCRAPE_BATCH_SIZE at a time, oldest-scraped first."""
+    MOBILE_RESCRAPE_BATCH_SIZE at a time, never-checked-first then
+    longest-since-checked — every attempt (found or not) stamps
+    mobile_check_attempted_at, so repeated clicks actually rotate through
+    the whole list instead of hammering the same few agencies forever."""
     conn = get_db()
     summary = MobileRescrapeSummary()
     try:
         rows = conn.execute(
             """SELECT id, name, website_url FROM agencies
                WHERE has_website=1 AND phone_source != 'direct_mobile'
-               ORDER BY id LIMIT ?""",
+               ORDER BY mobile_check_attempted_at ASC NULLS FIRST, id ASC LIMIT ?""",
             (MOBILE_RESCRAPE_BATCH_SIZE,),
         ).fetchall()
 
         for row in rows:
             direct_mobile = enrichment.try_enrich(row["website_url"])
             summary.checked += 1
+            ts = now_iso()
 
             if direct_mobile:
                 conn.execute(
                     """UPDATE agencies SET direct_mobile=?, phone_used=?,
-                       phone_source='direct_mobile', updated_at=? WHERE id=?""",
-                    (direct_mobile, direct_mobile, now_iso(), row["id"]),
+                       phone_source='direct_mobile', mobile_check_attempted_at=?,
+                       updated_at=? WHERE id=?""",
+                    (direct_mobile, direct_mobile, ts, ts, row["id"]),
                 )
-                conn.commit()
                 summary.found += 1
+            else:
+                conn.execute(
+                    "UPDATE agencies SET mobile_check_attempted_at=? WHERE id=?",
+                    (ts, row["id"]),
+                )
+            conn.commit()
 
             if progress_callback:
                 progress_callback(summary.checked, len(rows), summary.found)

@@ -25,8 +25,11 @@ CREATE TABLE IF NOT EXISTS agencies (
     source_method       TEXT CHECK(source_method IN ('requests','firecrawl','mixed')),
     do_not_contact_locked INTEGER NOT NULL DEFAULT 0,
     created_at          TEXT NOT NULL,
-    updated_at          TEXT NOT NULL
+    updated_at          TEXT NOT NULL,
+    mobile_check_attempted_at TEXT
 );
+-- idempotent: adds the column for databases created before it existed
+ALTER TABLE agencies ADD COLUMN IF NOT EXISTS mobile_check_attempted_at TEXT;
 CREATE INDEX IF NOT EXISTS idx_agencies_city ON agencies(city);
 CREATE INDEX IF NOT EXISTS idx_agencies_status ON agencies(status);
 CREATE INDEX IF NOT EXISTS idx_agencies_sent_at ON agencies(sent_at);
