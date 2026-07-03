@@ -20,12 +20,12 @@ async function handleIncomingMessage(message) {
   const normalizedPhone = normalizeWhatsAppId(message.from);
   if (!normalizedPhone) return;
 
-  const agency = db.findAgencyByPhone(normalizedPhone);
+  const agency = await db.findAgencyByPhone(normalizedPhone);
   if (!agency) return; // never touch numbers not in the CRM
 
   if (agency.status === "DO_NOT_CONTACT") return; // defense-in-depth, spec emphasizes this must be bulletproof
 
-  const settings = db.getSettings();
+  const settings = await db.getSettings();
   if (!settings.autoreply_enabled) {
     // Master switch OFF -> fully inert, no status change, no message (confirmed decision).
     return;
@@ -34,7 +34,7 @@ async function handleIncomingMessage(message) {
   if (!isEligibleForAutoReply(agency)) return; // only SENT/FOLLOW-UP DUE trigger this
 
   // Status flip to REPLIED happens immediately, not delayed.
-  db.markReplied(agency.id);
+  await db.markReplied(agency.id);
   console.log(`[autoreply] ${agency.name} (${normalizedPhone}) replied -> marked REPLIED`);
 
   if (agency.auto_reply_sent) {
@@ -59,11 +59,11 @@ async function handleIncomingMessage(message) {
 }
 
 async function sendAutoReply(agencyId, waTo) {
-  const fresh = db.getAgencyById(agencyId);
+  const fresh = await db.getAgencyById(agencyId);
   if (!fresh || fresh.auto_reply_sent) return; // re-check right before sending — never twice
   if (fresh.status === "DO_NOT_CONTACT") return;
 
-  const settings = db.getSettings();
+  const settings = await db.getSettings();
   if (settings.autoreply_connection_status !== "linked") {
     console.warn(`[autoreply] WARNING: connection not linked when trying to auto-reply to ${fresh.name} — aborting, queuing nothing.`);
     return;
@@ -77,8 +77,8 @@ async function sendAutoReply(agencyId, waTo) {
 
   try {
     await global.__waClient.sendMessage(waTo, text);
-    db.markAutoReplySent(agencyId);
-    db.logAutoReplyMessage(agencyId, template.version, text);
+    await db.markAutoReplySent(agencyId);
+    await db.logAutoReplyMessage(agencyId, template.version, text);
     console.log(`[autoreply] sent auto_reply to ${fresh.name}`);
   } catch (err) {
     console.error(`[autoreply] FAILED to send auto_reply to ${fresh.name}:`, err.message);
@@ -97,12 +97,12 @@ function start() {
   });
 
   client.on("ready", () => {
-    db.setConnectionStatus("linked");
+    db.setConnectionStatus("linked").catch((err) => console.error("[autoreply] failed to update connection status:", err));
     console.log("[autoreply] WhatsApp client READY — connection status: linked");
   });
 
   client.on("disconnected", (reason) => {
-    db.setConnectionStatus("disconnected");
+    db.setConnectionStatus("disconnected").catch((err) => console.error("[autoreply] failed to update connection status:", err));
     console.warn("[autoreply] WhatsApp client DISCONNECTED:", reason, "— incoming replies will be marked REPLIED but auto-reply will be skipped until reconnected.");
   });
 
@@ -117,9 +117,9 @@ function start() {
     try {
       const state = await client.getState();
       const status = state === "CONNECTED" ? "linked" : "disconnected";
-      db.setConnectionStatus(status);
+      await db.setConnectionStatus(status);
     } catch (err) {
-      db.setConnectionStatus("disconnected");
+      await db.setConnectionStatus("disconnected");
     }
   }, 30000);
 

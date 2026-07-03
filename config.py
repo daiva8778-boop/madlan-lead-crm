@@ -7,12 +7,10 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
-# DATA_DIR defaults to a local folder for `run.bat`/local use. On Railway, set
-# DATA_DIR to the mounted volume's path (e.g. /data) via an env var so the
-# database survives redeploys instead of living on ephemeral disk.
-DATA_DIR = Path(os.environ.get("DATA_DIR", str(BASE_DIR / "data")))
-DB_PATH = DATA_DIR / "madlan_crm.db"
-BACKUPS_DIR = DATA_DIR / "backups"
+# Single shared Postgres database (e.g. Neon) — used by the local app AND every
+# cloud deployment, so leads scraped/messaged from any of them show up
+# everywhere. Required; the app won't start without it.
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 SCHEMA_PATH = BASE_DIR / "db" / "schema.sql"
 
 FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY", "").strip()

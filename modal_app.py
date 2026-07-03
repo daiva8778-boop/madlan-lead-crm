@@ -4,14 +4,15 @@ Modal deployment for the Madlan Lead CRM dashboard.
 One-time setup (run these yourself from a terminal in this folder):
     pip install modal
     modal setup                      # opens a browser to link your Modal account
-    modal secret create madlan-crm-secrets FIRECRAWL_API_KEY=... DASHBOARD_PASSWORD=... SECRET_KEY=...
+    modal secret create madlan-crm-secrets FIRECRAWL_API_KEY=... DASHBOARD_PASSWORD=... SECRET_KEY=... DATABASE_URL=...
 
 Deploy (redeploy any time you push code changes):
     modal deploy modal_app.py
 
 Modal prints a public https://....modal.run URL after deploying — that's your
-dashboard's cloud address. The SQLite database lives on a Modal Volume
-(madlan-crm-data), so it persists across redeploys instead of resetting.
+dashboard's cloud address. The database is a shared Postgres instance (e.g.
+Neon) referenced via DATABASE_URL — the same one the local app connects to —
+so leads scraped or messaged from either place show up in both.
 """
 import os
 import sys
@@ -35,13 +36,11 @@ image = (
     .add_local_dir(".", remote_path="/app", copy=True, ignore=IGNORE_PATTERNS)
 )
 
-volume = modal.Volume.from_name("madlan-crm-data", create_if_missing=True)
 secrets = [modal.Secret.from_name("madlan-crm-secrets")]
 
 
 @app.function(
     image=image,
-    volumes={"/data": volume},
     secrets=secrets,
     min_containers=1,  # keep one instance warm so live scrape progress (in-memory) isn't lost between requests
     timeout=600,        # a "Scrape Next 50" run can take a few minutes
@@ -49,7 +48,6 @@ secrets = [modal.Secret.from_name("madlan-crm-secrets")]
 @modal.concurrent(max_inputs=20)
 @modal.wsgi_app()
 def flask_app():
-    os.environ["DATA_DIR"] = "/data"
     os.environ["RAILWAY_ENVIRONMENT"] = "modal"  # reuses the same "IS_CLOUD" gate (no browser auto-open, binds 0.0.0.0)
     sys.path.insert(0, "/app")
     os.chdir("/app")

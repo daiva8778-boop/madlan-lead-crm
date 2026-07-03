@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS agencies (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    id                  SERIAL PRIMARY KEY,
     madlan_office_id    TEXT NOT NULL UNIQUE,
     name                TEXT NOT NULL,
     city                TEXT NOT NULL,
@@ -34,7 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_agencies_has_website ON agencies(has_website);
 CREATE INDEX IF NOT EXISTS idx_agencies_scraped_at ON agencies(scraped_at);
 
 CREATE TABLE IF NOT EXISTS message_log (
-    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    id                 SERIAL PRIMARY KEY,
     agency_id          INTEGER NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
     template_key       TEXT NOT NULL CHECK(template_key IN
                         ('opener_has_site','opener_no_site','followup','auto_reply')),
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS scrape_progress (
 );
 
 CREATE TABLE IF NOT EXISTS failed_urls (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    id            SERIAL PRIMARY KEY,
     url           TEXT NOT NULL,
     url_type      TEXT NOT NULL CHECK(url_type IN ('directory','profile','enrichment')),
     city          TEXT,
@@ -75,4 +75,4 @@ CREATE TABLE IF NOT EXISTS settings (
     last_backup_date              TEXT,
     updated_at                    TEXT
 );
-INSERT OR IGNORE INTO settings (id, updated_at) VALUES (1, datetime('now'));
+INSERT INTO settings (id, updated_at) VALUES (1, NOW()::TEXT) ON CONFLICT (id) DO NOTHING;

@@ -1,26 +1,37 @@
 # Madlan Lead CRM
 
-A local dashboard that scrapes real estate agencies from madlan.co.il, tracks WhatsApp outreach
-to them, and (optionally) auto-replies to their first reply.
+A dashboard that scrapes real estate agencies from madlan.co.il, tracks WhatsApp outreach to
+them, and (optionally) auto-replies to their first reply. Runs locally on your PC, and/or on the
+cloud (Modal) so you can reach it from your phone — both use the **same shared database**, so
+leads and status changes made from either place show up in the other instantly.
 
-Everything runs on your own computer. Nothing is uploaded anywhere except to Firecrawl (which you
-already pay for) and to WhatsApp itself when you send a message.
+Nothing is uploaded anywhere except to: Firecrawl (which you already pay for), your shared
+Postgres database (Neon), and WhatsApp itself when you send a message.
 
 ## 1. Install once
 
 You need:
 - **Python 3.10+** — check with `python --version`
 - **A Firecrawl API key** (you already have a paid account) — from https://www.firecrawl.dev/app/api-keys
+- **A Postgres database** (e.g. a free Neon project at neon.tech) — the shared database every
+  deployment (local + cloud) connects to.
 - **Node.js 22.5+** — only if you want the optional auto-reply module. Check with `node --version`.
   Get it from https://nodejs.org if you don't have it.
 
 Steps:
 1. Copy `.env.example` to a new file named `.env` in this same folder.
-2. Open `.env` and paste your Firecrawl key after `FIRECRAWL_API_KEY=`, e.g.:
+2. Open `.env` and fill in:
    ```
    FIRECRAWL_API_KEY=fc-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   DATABASE_URL=postgresql://user:password@ep-xxxx.neon.tech/neondb?sslmode=require
    ```
 3. That's it — everything else installs itself the first time you run the app (see below).
+
+Note: the app needs internet access even when running "locally," since the database itself lives
+in the cloud (that's what makes local and cloud stay in sync). If your network's default DNS
+struggles to resolve the database host (a real issue hit during setup on one network — the app
+works around it automatically by querying Google/Cloudflare's public DNS directly for just that
+one lookup), that's handled for you already; no action needed.
 
 ## 2. Run it
 
@@ -129,9 +140,9 @@ madlan.co.il and copy the part of the URL after `/madad-search/`).
 
 ## 7. Backups
 
-Every time you start the app, it automatically makes one timestamped backup copy of your database
-into `db/backups/` (skipped if it already made one today). Your live data is always in
-`data/madlan_crm.db`.
+Your data lives in your Postgres database (Neon or whichever host `DATABASE_URL` points at), not
+in a local file — Neon (and most managed Postgres hosts) automatically handles backups and
+point-in-time recovery on its own, so the app doesn't need to make its own copies anymore.
 
 ## 8. How phone numbers and websites are actually obtained
 
@@ -166,7 +177,9 @@ A few things worth knowing:
 ## 9. Running it in the cloud (optional)
 
 The app can also run on a cloud host instead of (or in addition to) your own PC, so you can open
-the dashboard from any device. Two hosts are set up:
+the dashboard from any device. Since local and cloud both connect to the same `DATABASE_URL`
+(Postgres), **they share one live database** — scrape or message from either, and it shows up in
+both immediately. Two hosts are set up:
 
 ### Modal
 
@@ -176,27 +189,26 @@ To redeploy after making code changes:
 ```
 python -m modal deploy modal_app.py
 ```
-This reads the `madlan-crm-secrets` Modal secret (Firecrawl key, dashboard password, session key)
-and stores the database on a persistent Modal Volume (`madlan-crm-data`), so it survives redeploys.
-To view/change the secret values later: `python -m modal secret create madlan-crm-secrets --from-dotenv <file> --force`.
+This reads the `madlan-crm-secrets` Modal secret (Firecrawl key, dashboard password, session key,
+and the same `DATABASE_URL` as local). **Remember: pushing to GitHub does NOT redeploy Modal** —
+`modal deploy` is a separate manual step, needed any time the code changes.
+To view/change the secret values later: `python -m modal secret create madlan-crm-secrets --from-dotenv <file> --force`
+(then redeploy).
 
 **Important cost note:** scraping from Modal costs noticeably more Firecrawl credits than scraping
 locally — in testing, ~1 credit per agency from Modal vs. ~0 (free) from a home connection. This is
 because Madlan's bot protection treats Modal's server IPs with more suspicion than a normal home
-connection, so it falls back to Firecrawl far more often.
-
-**Also important:** the local app (`run.bat`) and the Modal deployment use **separate databases**
-(a local file vs. a Modal Volume) — scraping locally does not automatically appear in the cloud
-version, and vice versa. Given the cost difference above, the practical approach is: scrape from
-whichever one you check most often, or scrape locally and treat the cloud version mainly for
-viewing/messaging existing leads from other devices. Ask if you'd rather have one shared database
-instead — that's a bigger change (moving off SQLite to a proper hosted database) but doable.
+connection, so it falls back to Firecrawl far more often. Since the database is shared now, the
+practical approach is: run "Scrape Next 50" from your own PC when you can (cheaper), and use the
+Modal URL from your phone/elsewhere just to view leads and send WhatsApp messages — both see the
+exact same data either way.
 
 ### Railway
 
 Not yet deployed — prepared but not set up. The app already has what Railway needs
 (`Procfile`, reads the `PORT` env var, binds `0.0.0.0` when `RAILWAY_ENVIRONMENT` is set):
 1. Create a new Railway project, connect it to the `madlan-lead-crm` GitHub repo.
-2. Add a Volume, mounted at e.g. `/data`.
-3. Set environment variables: `FIRECRAWL_API_KEY`, `DASHBOARD_PASSWORD`, `SECRET_KEY`, `DATA_DIR=/data`.
-4. Railway auto-detects the `Procfile` and deploys.
+2. Set environment variables: `FIRECRAWL_API_KEY`, `DASHBOARD_PASSWORD`, `SECRET_KEY`, and the
+   same `DATABASE_URL` used locally and on Modal (no separate database/volume needed — it connects
+   to the same shared one).
+3. Railway auto-detects the `Procfile` and deploys.

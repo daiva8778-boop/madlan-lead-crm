@@ -1,3 +1,5 @@
+require("dotenv").config({ path: __dirname + "/../.env" });
+
 const db = require("./db");
 const { start } = require("./whatsapp_client");
 
@@ -9,12 +11,22 @@ console.log("Your computer must stay on and this window open for it to work.");
 console.log("The dashboard's master switch (default OFF) still gates all sending.");
 console.log("");
 
-db.setConnectionStatus("disconnected"); // will flip to 'linked' once the client is ready
+if (!process.env.DATABASE_URL) {
+  console.error("ERROR: DATABASE_URL is not set in .env — cannot start.");
+  process.exit(1);
+}
+
+db.setConnectionStatus("disconnected").catch((err) =>
+  console.error("[autoreply] failed to set initial connection status:", err)
+); // will flip to 'linked' once the client is ready
 
 start();
 
-process.on("SIGINT", () => {
+process.on("SIGINT", async () => {
   console.log("\n[autoreply] shutting down...");
-  db.setConnectionStatus("not_running");
-  process.exit(0);
+  try {
+    await db.setConnectionStatus("not_running");
+  } finally {
+    process.exit(0);
+  }
 });

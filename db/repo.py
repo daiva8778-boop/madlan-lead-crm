@@ -17,13 +17,14 @@ def insert_agency(conn, *, office_id, name, city, profile_url, deals_count,
             madlan_office_id, name, city, profile_url, deals_count, exclusives_count,
             phone_raw, direct_mobile, phone_used, phone_source, website_url, has_website,
             status, scraped_at, last_seen_at, source_method, created_at, updated_at
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'NEW',?,?,?,?,?)""",
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'NEW',?,?,?,?,?) RETURNING id""",
         (office_id, name, city, profile_url, deals_count, exclusives_count,
          phone_raw, direct_mobile, phone_used, phone_source, website_url,
          1 if has_website else 0, ts, ts, source_method, ts, ts),
     )
+    new_id = cur.lastrowid
     conn.commit()
-    return cur.lastrowid
+    return new_id
 
 
 def get_scrape_progress(conn, city):
