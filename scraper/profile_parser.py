@@ -1,6 +1,22 @@
 from scraper.ssr_extract import extract_ssr_state
 
 
+def _normalize_website_url(url):
+    """Madlan's websiteUrl field is sometimes missing the scheme entirely
+    (e.g. "www.example.co.il" instead of "https://www.example.co.il") —
+    confirmed via live data. Without a scheme, requests.get() fails outright
+    and a browser link resolves relative to whatever page it's clicked from,
+    so this is fixed at the source rather than patched at every call site."""
+    if not url:
+        return None
+    url = url.strip()
+    if not url:
+        return None
+    if not url.lower().startswith(("http://", "https://")):
+        url = "https://" + url
+    return url
+
+
 class ProfileResult:
     def __init__(self, name, phone_raw, website_url):
         self.name = name
@@ -30,5 +46,5 @@ def parse_profile_page(raw_html):
     return ProfileResult(
         name=office.get("officeName"),
         phone_raw=office.get("virtualPhone"),
-        website_url=office.get("websiteUrl") or None,
+        website_url=_normalize_website_url(office.get("websiteUrl")),
     )

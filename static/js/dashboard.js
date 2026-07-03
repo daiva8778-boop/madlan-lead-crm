@@ -247,6 +247,64 @@ el("scrape-btn").addEventListener("click", async () => {
   }
 });
 
+// --- Scrape Mobile control ---
+
+let mobilePollTimer = null;
+
+function renderMobileProgress(s) {
+  const progressPanel = el("mobile-progress");
+  const summaryPanel = el("mobile-summary");
+  const btn = el("mobile-scrape-btn");
+
+  if (s.running) {
+    btn.disabled = true;
+    progressPanel.classList.remove("hidden");
+    summaryPanel.classList.add("hidden");
+    el("mobile-progress-text").textContent = `${s.checked}/${s.target}... (found: ${s.found})`;
+    const pct = s.target ? Math.min(100, (s.checked / s.target) * 100) : 0;
+    el("mobile-progress-bar-fill").style.width = pct + "%";
+  } else {
+    btn.disabled = false;
+    progressPanel.classList.add("hidden");
+    if (s.done && (s.summary || s.error)) {
+      summaryPanel.classList.remove("hidden");
+      if (s.error) {
+        summaryPanel.innerHTML = `<b>Error:</b> ${s.error}`;
+      } else {
+        const sm = s.summary;
+        summaryPanel.innerHTML = `
+          <b>Done</b><br>
+          Checked: ${sm.checked}<br>
+          Mobile numbers found: ${sm.found}
+        `;
+      }
+      loadAgencies();
+    }
+  }
+}
+
+async function pollMobileProgress() {
+  const s = await api("/api/mobile/progress");
+  renderMobileProgress(s);
+  if (s.running) {
+    mobilePollTimer = setTimeout(pollMobileProgress, 1000);
+  }
+}
+
+el("mobile-scrape-btn").addEventListener("click", async () => {
+  try {
+    await api("/api/mobile/start", { method: "POST" });
+    clearTimeout(mobilePollTimer);
+    pollMobileProgress();
+  } catch (err) {
+    if (err.status === 409) {
+      alert("A mobile re-check is already running.");
+    } else {
+      alert(err.message || "Could not start mobile re-check");
+    }
+  }
+});
+
 // --- Failed URLs panel ---
 
 el("failed-urls-toggle").addEventListener("click", async () => {
@@ -297,5 +355,8 @@ el("autoreply-toggle").addEventListener("change", async (e) => {
   const s = await api("/api/scrape/progress");
   renderProgress(s);
   if (s.running) pollProgress();
+  const ms = await api("/api/mobile/progress");
+  renderMobileProgress(ms);
+  if (ms.running) pollMobileProgress();
   setInterval(loadAutoreplyStatus, 10000);
 })();

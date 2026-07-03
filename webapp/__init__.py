@@ -16,7 +16,7 @@ def create_app():
 
     from webapp import (
         routes_pages, routes_scrape, routes_agencies, routes_export,
-        routes_templates, routes_autoreply, routes_auth,
+        routes_templates, routes_autoreply, routes_auth, routes_mobile,
     )
     app.register_blueprint(routes_pages.bp)
     app.register_blueprint(routes_scrape.bp)
@@ -25,6 +25,7 @@ def create_app():
     app.register_blueprint(routes_templates.bp)
     app.register_blueprint(routes_autoreply.bp)
     app.register_blueprint(routes_auth.bp)
+    app.register_blueprint(routes_mobile.bp)
 
     @app.before_request
     def require_login():

@@ -1,8 +1,10 @@
 import config
-from db.database import get_db
+from db.database import get_db, now_iso
 from db import repo
 from scraper import madlan_client, directory_parser, profile_parser, enrichment
 from scraper.phone_utils import normalize_il_phone
+
+MOBILE_RESCRAPE_BATCH_SIZE = 5
 
 
 class RunSummary:
@@ -12,6 +14,12 @@ class RunSummary:
         self.credits_used = 0
         self.failed_count = 0
         self.city_exhausted = False
+
+
+class MobileRescrapeSummary:
+    def __init__(self):
+        self.checked = 0
+        self.found = 0
 
 
 def _build_directory_url(city_key):
@@ -116,6 +124,43 @@ def scrape_next_50(city_key, progress_callback=None):
                                    summary.no_website_count, summary.credits_used)
 
             repo.save_scrape_progress(conn, city_key, 0, False, total_scraped_so_far)
+
+        return summary
+    finally:
+        conn.close()
+
+
+def rescrape_mobile_batch(progress_callback=None):
+    """Re-checks agencies that have a website but no confirmed direct mobile
+    yet (phone_source != 'direct_mobile') — the first enrichment attempt can
+    miss it (site slow/down at scrape time, contact page not found that
+    round), so retrying later can pick up ones that were missed. Processes
+    MOBILE_RESCRAPE_BATCH_SIZE at a time, oldest-scraped first."""
+    conn = get_db()
+    summary = MobileRescrapeSummary()
+    try:
+        rows = conn.execute(
+            """SELECT id, name, website_url FROM agencies
+               WHERE has_website=1 AND phone_source != 'direct_mobile'
+               ORDER BY id LIMIT ?""",
+            (MOBILE_RESCRAPE_BATCH_SIZE,),
+        ).fetchall()
+
+        for row in rows:
+            direct_mobile = enrichment.try_enrich(row["website_url"])
+            summary.checked += 1
+
+            if direct_mobile:
+                conn.execute(
+                    """UPDATE agencies SET direct_mobile=?, phone_used=?,
+                       phone_source='direct_mobile', updated_at=? WHERE id=?""",
+                    (direct_mobile, direct_mobile, now_iso(), row["id"]),
+                )
+                conn.commit()
+                summary.found += 1
+
+            if progress_callback:
+                progress_callback(summary.checked, len(rows), summary.found)
 
         return summary
     finally:

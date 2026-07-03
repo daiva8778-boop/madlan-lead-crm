@@ -35,6 +35,8 @@ body {
 }
 .big-button:hover { background: #1fb958; }
 .big-button:disabled { background: #4a4f5c; color: #888; cursor: not-allowed; }
+.big-button.secondary-button { background: #3a4152; color: #e7e9ee; }
+.big-button.secondary-button:hover { background: #4a5266; }
 
 .panel {
   background: #2a3040;
