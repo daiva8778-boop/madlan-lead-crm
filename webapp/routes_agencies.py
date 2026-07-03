@@ -27,6 +27,8 @@ def _apply_filters(rows, filter_key, city):
             return row["status"] == "REPLIED"
         if filter_key == "no_site":
             return not row["has_website"]
+        if filter_key == "mobile":
+            return row["phone_source"] == "direct_mobile"
         return True
 
     return [r for r in rows if keep(r)]
