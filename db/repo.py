@@ -8,6 +8,22 @@ def agency_exists(conn, office_id):
     return row is not None
 
 
+def is_rejected(conn, office_id):
+    row = conn.execute(
+        "SELECT 1 FROM rejected_office_ids WHERE madlan_office_id=?", (office_id,)
+    ).fetchone()
+    return row is not None
+
+
+def mark_rejected(conn, office_id, city, reason):
+    conn.execute(
+        """INSERT INTO rejected_office_ids (madlan_office_id, city, reason, checked_at)
+           VALUES (?,?,?,?) ON CONFLICT (madlan_office_id) DO NOTHING""",
+        (office_id, city, reason, now_iso()),
+    )
+    conn.commit()
+
+
 def insert_agency(conn, *, office_id, name, city, profile_url, deals_count,
                    exclusives_count, phone_raw, direct_mobile, phone_used,
                    phone_source, website_url, has_website, source_method):

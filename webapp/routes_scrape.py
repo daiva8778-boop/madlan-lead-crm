@@ -4,21 +4,21 @@ from flask import Blueprint, jsonify, request
 
 import config
 from db.database import get_db
-from scraper.pipeline import scrape_next_50
+from scraper.pipeline import scrape_next_mobile_leads
 from webapp import scrape_state
 
 bp = Blueprint("scrape", __name__, url_prefix="/api/scrape")
 
 
 def _run_scrape(city):
-    def cb(scraped, target, no_website_count, credits_used):
-        scrape_state.update_progress(scraped, target, no_website_count, credits_used)
+    def cb(new_saved, target, rejected_count, credits_used):
+        scrape_state.update_progress(new_saved, target, rejected_count, credits_used)
 
     try:
-        summary = scrape_next_50(city, progress_callback=cb)
+        summary = scrape_next_mobile_leads(city, progress_callback=cb)
         scrape_state.finish(summary={
             "new_saved": summary.new_saved,
-            "no_website_count": summary.no_website_count,
+            "rejected_count": summary.rejected_count,
             "credits_used": summary.credits_used,
             "failed_count": summary.failed_count,
             "city_exhausted": summary.city_exhausted,

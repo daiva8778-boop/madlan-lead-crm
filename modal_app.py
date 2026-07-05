@@ -43,7 +43,7 @@ secrets = [modal.Secret.from_name("madlan-crm-secrets")]
     image=image,
     secrets=secrets,
     min_containers=1,  # keep one instance warm so live scrape progress (in-memory) isn't lost between requests
-    timeout=600,        # a "Scrape Next 50" run can take a few minutes
+    timeout=600,        # a "Scrape Next 10" run can take a few minutes (may need to check many candidates to find 10 with a mobile)
 )
 @modal.concurrent(max_inputs=20)
 @modal.wsgi_app()

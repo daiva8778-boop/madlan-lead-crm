@@ -70,6 +70,17 @@ CREATE TABLE IF NOT EXISTS failed_urls (
 CREATE INDEX IF NOT EXISTS idx_failed_urls_type ON failed_urls(url_type);
 CREATE INDEX IF NOT EXISTS idx_failed_urls_resolved ON failed_urls(resolved);
 
+-- Agencies checked during a mobile-only scrape that turned out to have no
+-- reachable mobile number (no website, or a website with no mobile found) —
+-- tracked separately from `agencies` (which now only holds real, reachable
+-- leads) purely so future scrapes don't keep re-visiting the same rejects.
+CREATE TABLE IF NOT EXISTS rejected_office_ids (
+    madlan_office_id  TEXT PRIMARY KEY,
+    city              TEXT NOT NULL,
+    reason            TEXT NOT NULL CHECK(reason IN ('no_website','no_mobile_found')),
+    checked_at        TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS settings (
     id                            INTEGER PRIMARY KEY CHECK (id = 1),
     autoreply_enabled             INTEGER NOT NULL DEFAULT 0,

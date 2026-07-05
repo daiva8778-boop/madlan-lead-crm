@@ -194,7 +194,7 @@ function renderProgress(s) {
     btn.disabled = true;
     progressPanel.classList.remove("hidden");
     summaryPanel.classList.add("hidden");
-    el("progress-text").textContent = `${s.scraped}/${s.target}... (no-site: ${s.no_website_count}, credits: ${s.credits_used})`;
+    el("progress-text").textContent = `${s.scraped}/${s.target} with mobile found... (skipped: ${s.rejected_count}, credits: ${s.credits_used})`;
     const pct = s.target ? Math.min(100, (s.scraped / s.target) * 100) : 0;
     el("progress-bar-fill").style.width = pct + "%";
   } else {
@@ -208,11 +208,11 @@ function renderProgress(s) {
         const sm = s.summary;
         summaryPanel.innerHTML = `
           <b>Run complete</b><br>
-          Scraped: ${sm.new_saved}<br>
-          No website: ${sm.no_website_count}<br>
+          New leads with a mobile number: ${sm.new_saved}<br>
+          Skipped (no website / no mobile found): ${sm.rejected_count}<br>
           Firecrawl credits used: ${sm.credits_used}<br>
           Failed URLs: ${sm.failed_count}<br>
-          ${sm.city_exhausted ? "<b>This city has no more new agencies.</b>" : ""}
+          ${sm.city_exhausted ? "<b>This city has no more new agencies to check.</b>" : ""}
         `;
       }
       loadAgencies();

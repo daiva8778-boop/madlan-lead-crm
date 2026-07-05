@@ -39,7 +39,7 @@ CITIES = {
 DIRECTORY_BASE_URL = "https://www.madlan.co.il/madad-search/"
 PROFILE_URL_MARKER = "/agentsOffice/"
 
-SCRAPE_BATCH_TARGET = 50
+SCRAPE_BATCH_TARGET = 10
 POLITE_DELAY_MIN = 1.5
 POLITE_DELAY_MAX = 2.0
 
